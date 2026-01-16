@@ -389,6 +389,56 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.4
 
+  # ========================================================
+  # 新增 Job：合并 macOS 二进制文件
+  # ========================================================
+  merge-macos-universal:
+    name: Merge macOS Universal Binary
+    runs-on: macos-latest
+    needs: [vars, build-macos]
+    if: success()
+    steps:
+      - name: Download macOS x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          # 注意：这里的名称必须与 build-macos 中上传的名称匹配
+          # macos-12 对应 x86_64
+          name: ${{ env.progname }}-${{ needs.vars.outputs.short_sha }}-${{ needs.vars.outputs.build_type }}-macos-12-x86_64-${{ env.upload_suffix }}
+          path: artifacts/x86_64
+
+      - name: Download macOS arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          # macos-14 对应 arm64
+          name: ${{ env.progname }}-${{ needs.vars.outputs.short_sha }}-${{ needs.vars.outputs.build_type }}-macos-14-arm64-${{ env.upload_suffix }}
+          path: artifacts/arm64
+
+      - name: Create Universal Binary
+        run: |
+          mkdir -p artifacts/universal
+          
+          # 假设二进制文件名为 magiskboot
+          X64_FILE="artifacts/x86_64/magiskboot"
+          ARM64_FILE="artifacts/arm64/magiskboot"
+          UNI_FILE="artifacts/universal/magiskboot"
+          
+          echo "Merging:"
+          echo "  - $X64_FILE"
+          echo "  - $ARM64_FILE"
+          
+          # 使用 lipo 合并
+          lipo -create "$X64_FILE" "$ARM64_FILE" -output "$UNI_FILE"
+          chmod +x "$UNI_FILE"
+          
+          echo "Verifying universal binary:"
+          file "$UNI_FILE"
+          lipo -info "$UNI_FILE"
+
+      - name: Upload Universal Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.progname }}-${{ needs.vars.outputs.short_sha }}-${{ needs.vars.outputs.build_type }}-macos-universal-${{ env.upload_suffix }}
+          path: artifacts/universal/magiskboot
   build-macos-cross:
     name: Build (macOS) (Cross)
     strategy:
