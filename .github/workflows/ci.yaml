@@ -138,6 +138,12 @@ jobs:
           sudo apt update
           sudo DEBIAN_FRONTEND=noninteractive apt install -y wget tar file \
                     build-essential pkg-config cmake ninja-build
+                    
+      - name: Setup Rust
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.77.2
+          source $HOME/.cargo/env
+          rustup target add aarch64-linux-android
 
       - name: Cache (ONDK)
         id: cache-ondk
@@ -328,6 +334,11 @@ jobs:
           brew install --overwrite coreutils wget file xz lz4 pkg-config cmake ninja llvm rust || true
           brew install --overwrite coreutils wget file xz lz4 pkg-config cmake ninja llvm rust
           echo "$(brew --prefix)/opt/llvm/bin" | tee -a $GITHUB_PATH
+      
+      - name: Setup Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.77.2
+          source $HOME/.cargo/env
 
       - name: Prepare (Detect)
         id: detect-runner
@@ -570,7 +581,12 @@ jobs:
             base-devel file wget vim
           pacboy: >-
             xz:p lz4:p bzip2:p zlib:p pkgconf:p clang:p
-            lld:p cmake:p libc++:p ninja:p rust:p
+            lld:p cmake:p libc++:p ninja:p
+            
+      - name: Setup Rust
+        run: |
+          rustup toolchain install 1.77.2
+          rustup default 1.77.2
 
       - name: Synchronize (source)
         uses: yogeshlonkar/wait-for-jobs@v0.4.1
