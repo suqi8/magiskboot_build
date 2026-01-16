@@ -1,0 +1,26 @@
+name: Merge Magiskboot Only
+
+on: workflow_dispatch
+
+jobs:
+  merge:
+    runs-on: macos-latest
+    steps:
+      - name: Download Binaries
+        run: |
+          wget -O x86.zip "https://github.com/PinNaCode/magiskboot_build/releases/download/last-ci/magiskboot-e159716-release-macos-14-x86_64-standalone.zip"
+          wget -O arm.zip "https://github.com/PinNaCode/magiskboot_build/releases/download/last-ci/magiskboot-e159716-release-macos-14-arm64-standalone.zip"
+          
+          unzip x86.zip -d x86_dir
+          unzip arm.zip -d arm_dir
+
+      - name: Merge with Lipo
+        run: |
+          lipo -create x86_dir/magiskboot arm_dir/magiskboot -output magiskboot_universal
+          chmod +x magiskboot_universal
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: magiskboot_universal
+          path: magiskboot_universal
